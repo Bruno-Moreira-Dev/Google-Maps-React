@@ -1,92 +1,85 @@
-// import React from 'react';
-// import { compose, withStateHandlers } from 'recompose';
-// import { withGoogleMap, withScriptjs, GoogleMap, Marker } from 'react-google-maps';
+import React, { Component } from 'react';
+import { Map, InfoWindow, Marker, GoogleApiWrapper } from 'google-maps-react';
 
-// const Map = compose(
-//   withStateHandlers(() => ({
-//     isMarkerShown: false,
-//     markerPosition: null
-//   }),
-//     {
-//       onMapClick: () => (e) => ({
-//         markerPosition: e.latLng,
-//         isMarkerShown: true,
-//       })
-//     }),
-//   withScriptjs,
-//   withGoogleMap,
-// )
-//   (props =>
-//     <GoogleMap
-//       defaultZoom={8}
-//       defaultCenter={{ lat: -23.184660, lng: -47.277512 }}
-//       onClick={props.onMapClick}
-//     >
-//       {props.isMarkerShown && <Marker position={props.markerPosition} />}
-//     </GoogleMap>
-//   )
+class App extends Component {
+  state = {
+    location: 'Salto',
+    latitude: -23.184660,
+    longitude: -47.277512,
+    showingInfoWindow: false,
+    activeMarker: {},
+    selectedPlace: {},
+  };
 
-// export default class App extends React.Component {
-//   constructor(props) {
-//     super(props);
-//   }
+  constructor(props) {
+    super(props);
+  }
 
-//   render() {
-//     return (
-//       <Map
-//         googleMapURL="https://maps.googleapis.com/maps/api/js?key=AIzaSyDZN71Y-8KpjRbqjPkn9OnNqTjbllLU4Dk"
-//         loadingElement={<div style={{ height: `100%` }} />}
-//         containerElement={<div style={{ height: `100%` }} />}
-//         mapElement={<div style={{ height: `100%` }} />}
-//         position={{ lat: -23.184660, lng: -47.277512 }}
-//       />
-//     )
-//   }
-// }
+  onMarkerClick = (props, marker, e) =>
+    this.setState({
+      selectedPlace: props,
+      activeMarker: marker,
+      showingInfoWindow: true,
+    });
 
-import React from 'react'
-import { GoogleMap, useJsApiLoader } from '@react-google-maps/api';
+  handleChange = (name, e) => {
+    this.setState({ [name]: e.target.value });
+  }
 
-const containerStyle = {
-  width: '400px',
-  height: '400px'
-};
-
-const center = {
-  lat: -3.745,
-  lng: -38.523
-};
-
-function MyComponent() {
-  const { isLoaded } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: "AIzaSyDZN71Y-8KpjRbqjPkn9OnNqTjbllLU4Dk"
-  })
-
-  const [map, setMap] = React.useState(null)
-
-  const onLoad = React.useCallback(function callback(map) {
-    const bounds = new window.google.maps.LatLngBounds();
-    map.fitBounds(bounds);
-    setMap(map)
-  }, [])
-
-  const onUnmount = React.useCallback(function callback(map) {
-    setMap(null)
-  }, [])
-
-  return isLoaded ? (
-      <GoogleMap
-        mapContainerStyle={containerStyle}
-        center={center}
-        zoom={10}
-        onLoad={onLoad}
-        onUnmount={onUnmount}
-      >
-        { /* Child components, such as markers, info windows, etc. */ }
-        <></>
-      </GoogleMap>
-  ) : <></>
+  render() {
+    return (
+      <div className="App bg-light">
+        <header className="App-header mx-3 pt-3">
+          <h4 className="App-title">Google Maps - Marcador dinâmico</h4>
+        </header>
+        <section className="m-3">
+          <form className="form-group">
+            <div className="row">
+              <div className="form-group col-sm-6">
+                <label htmlFor="location">Informe a localização:</label>
+                <input type="text" className="form-control" id="location" value={this.state.location} onChange={(e) => this.handleChange('location', e)} />
+              </div>
+            </div>
+            <div className="row">
+              <div className="form-group col-sm-6 mt-2">
+                <label htmlFor="latitude">Informe a latitude:</label>
+                <input type="text" className="form-control" id="latitude" value={this.state.latitude} onChange={(e) => this.handleChange('latitude', e)} />
+              </div>
+              <div className="form-group col-sm-6 mt-2">
+                <label htmlFor="longitude">Informe a longitude:</label>
+                <input type="text" className="form-control" id="longitude" value={this.state.longitude} onChange={(e) => this.handleChange('longitude', e)} />
+              </div>
+            </div>
+          </form>
+        </section>
+        <Map
+          google={this.props.google}
+          zoom={5}
+          initialCenter={{ lat: this.state.latitude, lng: this.state.longitude }}
+        >
+          <Marker
+            name={this.state.location}
+            position={{ lat: this.state.latitude, lng: this.state.longitude }}
+            onClick={this.onMarkerClick}
+          />
+          <InfoWindow
+            marker={this.state.activeMarker}
+            visible={this.state.showingInfoWindow}>
+            <div>
+              <h1>{this.state.selectedPlace.name}</h1>
+            </div>
+          </InfoWindow>
+        </Map>
+      </div>
+    )
+  }
 }
 
-export default React.memo(MyComponent)
+const LoadingContainer = () => (
+  <div>Loading...</div>
+)
+
+export default GoogleApiWrapper({
+  apiKey: ("AIzaSyDZN71Y-8KpjRbqjPkn9OnNqTjbllLU4Dk"),
+  LoadingContainer: LoadingContainer
+})(App)
